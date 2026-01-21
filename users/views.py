@@ -5,8 +5,8 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
-from users.paginators import CustomPageNumberPagination
 from users.models import User
+from users.paginators import CustomPageNumberPagination
 from users.permissions import IsAdminUser, IsUserOwner
 from users.serializer import PrivateUserSerializer, PublicUserSerializer
 
