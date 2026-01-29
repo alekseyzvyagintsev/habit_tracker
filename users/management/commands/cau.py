@@ -45,7 +45,7 @@ class Command(BaseCommand):
 
         # Создание админа
         admin, created = User.objects.get_or_create(
-            email="admin@example.com", defaults={"username": "admin", "is_staff": True, "is_superuser": True}
+            email="admin@example.com", defaults={"is_staff": True, "is_superuser": True}
         )
         if created:
             admin.set_password("qwer1234")
@@ -58,9 +58,7 @@ class Command(BaseCommand):
             self.stdout.write(f"Пользователь {admin.email} уже существует.")
 
         # Создание модератора
-        moderator, created = User.objects.get_or_create(
-            email="moderator@example.com", defaults={"username": "moderator", "is_staff": True}
-        )
+        moderator, created = User.objects.get_or_create(email="moderator@example.com", defaults={"is_staff": True})
         if created:
             moderator.set_password("qwer1234")
             moderator.is_active = True
@@ -72,7 +70,7 @@ class Command(BaseCommand):
             self.stdout.write(f"Модератор {moderator.email} уже существует.")
 
         # Создание пользователя
-        user, created = User.objects.get_or_create(email="user@example.com", defaults={"username": "user"})
+        user, created = User.objects.get_or_create(email="user@example.com")
         if created:
             user.set_password("qwer1234")
             user.is_active = True

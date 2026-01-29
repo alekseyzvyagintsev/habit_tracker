@@ -5,13 +5,20 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+import habit_tracker
+
 # Загрузка переменных окружения
 load_dotenv(override=True)
 
 # Настройки проекта и пути
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Ключ для шифрования
 SECRET_KEY = os.getenv("SECRET_KEY")
+
+# Токен телеграмм бота
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 
 # Режим отладки
 DEBUG = True if os.getenv("DEBUG") == "True" else False
@@ -33,8 +40,9 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "drf_spectacular",
     "corsheaders",
-    "rest_framework",
-    "users.apps.UsersConfig",
+    "django.contrib.admindocs",
+    "users",
+    "tracker",
 ]
 
 MIDDLEWARE = [
@@ -162,7 +170,7 @@ CACHE_ENABLED = True
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "redis://redis:6379/1",
+        "LOCATION": "redis://localhost:6379/1",
     }
 }
 
@@ -195,12 +203,12 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
-        "sending": {
+        "users": {
             "handlers": ["console", "file"],
             "level": "DEBUG",
             "propagate": False,
         },
-        "users": {
+        "tracker": {
             "handlers": ["console", "file"],
             "level": "DEBUG",
             "propagate": False,
@@ -214,7 +222,7 @@ LOGGING = {
 
 # Настройки Spectacular
 SPECTACULAR_SETTINGS = {
-    "TITLE": "uni_school API",
+    "TITLE": "habit-tracker API",
     "DESCRIPTION": "Test description",
     "VERSION": "v1",
     "TERMS_OF_SERVICE": "https://www.google.com/policies/terms/",
@@ -232,7 +240,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 # Разрешения для CSRF
 CSRF_TRUSTED_ORIGINS = [
-    "https://read-only.example.com",  #  адрес фронтенд-сервера
+    "https://read-only.example.com",  # адрес фронтенд-сервера
     "http://localhost:8000",  # адрес бэкенд-сервера
 ]
 # Разрешение для всех доменов
@@ -241,9 +249,9 @@ CORS_ALLOW_ALL_ORIGINS = False
 # Настройки Celery и Redis для асинхронных задач и очереди
 
 # URL-адрес брокера сообщений
-CELERY_BROKER_URL = "redis://redis:6379/0"
+CELERY_BROKER_URL = "redis://localhost:6379/0"
 # URL-адрес брокера результатов, также Redis
-CELERY_RESULT_BACKEND = "redis://redis:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 
 # Настройки сериализации для Celery
 CELERY_ACCEPT_CONTENT = ["json"]
@@ -264,6 +272,10 @@ if SCHEDULER_DEFAULT:
     CELERY_BEAT_SCHEDULE = {
         "deactivate_expired_users_task": {
             "task": "users.tasks.deactivate_expired_users_task",
+            "schedule": timedelta(minutes=1),
+        },
+        "burning_habits_reminder_task": {
+            "task": "tracker.tasks.burning_habits_reminder_task",
             "schedule": timedelta(minutes=1),
         },
     }
