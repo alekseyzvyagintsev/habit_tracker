@@ -63,7 +63,6 @@ class Habit(models.Model):
         related_name="habits",  # user.habits.all()
         verbose_name="Владелец",
     )
-    phone_number = models.CharField(max_length=12, null=True, blank=True, verbose_name="Номер телефона")
     related_habit = models.ForeignKey(
         "self",
         null=True,
