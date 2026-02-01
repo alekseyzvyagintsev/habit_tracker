@@ -2,8 +2,8 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
-from django.urls import path, include, re_path
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+from django.urls import include, path, re_path
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from rest_framework.reverse import reverse
 
 from habit_tracker import settings
@@ -13,10 +13,12 @@ from habit_tracker import settings
 def redirect_to_swagger(request):
     return HttpResponseRedirect(reverse("swagger-ui"))
 
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path("admindocs/", include("django.contrib.admindocs.urls")),
-    path("", include("users.urls", namespace="users_urls")),
+    path("admin/", admin.site.urls),
+    path("admin/doc/", include("django.contrib.admindocs.urls")),
+    path("", include("users.urls", namespace="users")),
+    path("", include("tracker.urls", namespace="tracker ")),
     # Маршруты для схемы и документации
     re_path(r"^api/schema(?P<format>\.json|\.yaml)?$", SpectacularAPIView.as_view(), name="schema"),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

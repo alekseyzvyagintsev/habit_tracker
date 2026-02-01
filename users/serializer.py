@@ -10,7 +10,6 @@ class PublicUserSerializer(serializers.ModelSerializer):
 
     **Обязательные поля для регистрации:**
     - `email`: Существующий адрес электронной почты пользователя. Используется при подтверждении.
-    - `username`: уникальное имя пользователя
     - `password`: Пароль хешируется при создании пользователя.
 
     **Настройки:**
@@ -26,13 +25,12 @@ class PublicUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "email", "username", "password"]
+        fields = ["id", "email", "password"]
         read_only_fields = ("id",)
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
         user = User.objects.create_user(
-            username=validated_data["username"],
             email=validated_data["email"],
             password=validated_data["password"],
             is_active=True,

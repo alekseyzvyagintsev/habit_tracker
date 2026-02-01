@@ -1,46 +1,52 @@
 #############################################################################################
+from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+
+
+class UserManager(BaseUserManager):
+    """
+    Кастомный менеджер для создания пользователей с email как основным идентификатором.
+    """
+
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError("Email обязателен")
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Суперпользователь должен иметь is_staff=True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Суперпользователь должен иметь is_superuser=True.")
+
+        return self.create_user(email, password, **extra_fields)
 
 
 class User(AbstractUser):
     """
     Расширенная модель пользователя.
-
-    Эта модель расширяет стандартную модель пользователя Django (AbstractUser), добавляя дополнительные поля
-    для хранения контактной информации, аватара и токенов активации аккаунта.
-
-    Поля:
-        * email (EmailField): Уникальная почта пользователя (используется как основное имя пользователя).
-        * phone_number (CharField): Номер телефона пользователя (необязательно).
-        * avatar (ImageField): Изображение профиля пользователя (необязательно).
-        * country (CharField): Страна проживания пользователя (необязательно).
-        * is_active (BooleanField): Активирован ли аккаунт пользователя (по умолчанию неактивен).
-        * activation_token (CharField): Токен подтверждения регистрации (необязательно).
-        * token_expires_at (DateTimeField): Срок истечения токена подтверждения регистрации (необязательно).
-
-    Методы:
-        * __str__(): Возвращает электронную почту пользователя в качестве строкового представления.
-
-    Конфигурация:
-        * USERNAME_FIELD (str): Поле, используемое для идентификации пользователя (почта).
-        * REQUIRED_FIELDS (list): Список обязательных полей помимо username и password.
-        * verbose_name (str): Название одной записи в единственном числе.
-        * verbose_name_plural (str): Название множества записей.
-        * ordering (list): Порядок сортировки объектов.
-        * db_table (str): Название таблицы в БД.
+    Поле username удалено. Используется email как основной идентификатор.
     """
 
-    email = models.EmailField(unique=True)
+    username = None
+    email = models.EmailField("email address", unique=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
     country = models.CharField(max_length=50, blank=True, null=True)
     is_active = models.BooleanField(default=False)
 
+    objects = UserManager()  # подключаем кастомный менеджер
+
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = [
-        "username",
-    ]
+    REQUIRED_FIELDS = []
 
     def __str__(self):
         return self.email
@@ -48,9 +54,7 @@ class User(AbstractUser):
     class Meta:
         verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи"
-        ordering = [
-            "username",
-        ]
+        ordering = ["email"]
         db_table = "user"
 
 

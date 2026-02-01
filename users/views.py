@@ -5,31 +5,27 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
-from users.paginators import CustomPageNumberPagination
 from users.models import User
+from users.paginators import CustomPageNumberPagination
 from users.permissions import IsAdminUser, IsUserOwner
 from users.serializer import PrivateUserSerializer, PublicUserSerializer
 
 
 @extend_schema(tags=["Users"])
 @extend_schema_view(
-    retrieve=extend_schema(
-        summary="Детальная информация о пользователе",
-    ),
-    list=extend_schema(
-        summary="Получение списка пользователей.",
-    ),
-    update=extend_schema(
-        summary="Полное (PUT) обновление пользователя.",
-    ),
-    partial_update=extend_schema(
-        summary="Частичное (PATCH) обновление пользователя.",
-    ),
-    destroy=extend_schema(
-        summary="Удаление пользователя.",
-    ),
+    retrieve=extend_schema(summary="Детальная информация о пользователе"),
+    list=extend_schema(summary="Получение списка пользователей."),
+    update=extend_schema(summary="Полное (PUT) обновление пользователя."),
+    partial_update=extend_schema(summary="Частичное (PATCH) обновление пользователя."),
+    destroy=extend_schema(summary="Удаление пользователя."),
 )
-class UserViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class UserViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
     """
     ViewSet для работы с моделями пользователей.
 
@@ -51,7 +47,6 @@ class UserViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gen
     - DELETE /users/id/: Удаление пользователя.
 
     Доступ к различным действиям контролируется системой разрешений:
-    - `create`: разрешено анонимному пользователю (AllowAny).
     - `list`: ограничено администратором системы (IsAuthenticated & IsAdminUser).
     - `retrieve`, `update`, `partial_update` и `destroy`: доступ предоставляется либо владельцу аккаунта,
       либо сотруднику с ролью администратора (IsAuthenticated & (IsUserOwner | IsAdminUser)).
@@ -123,19 +118,25 @@ class UserViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gen
         else:
             raise PermissionDenied("У вас недостаточно прав для просмотра профиля.")
 
-    def update(self, request, *args, **kwargs):
-        # Метод PUT остается не низменным.
-        pass
+    #
+    # def update(self, request, *args, **kwargs):
+    #     # Метод PUT остается не низменным.
+    #     pass
+    #
+    # def partial_update(self, request, *args, **kwargs):
+    #     # Метод PATCH остается не низменным
+    #     pass
+    #
+    # def destroy(self, request, *args, **kwargs):
+    #     # Метод DELETE остается не низменным
+    #     pass
 
-    def partial_update(self, request, *args, **kwargs):
-        # Метод PATCH остается не низменным
-        pass
 
-    def destroy(self, request, *args, **kwargs):
-        # Метод DELETE остается не низменным
-        pass
-
-
+@extend_schema(
+    tags=["Users"],
+    summary="Регистрация нового пользователя",
+    description="Создает нового пользователя с указанным именем, почтой и паролем.",
+)
 class UserCreateAPIView(CreateAPIView):
     """
     Представление для создания нового пользователя.
@@ -154,11 +155,6 @@ class UserCreateAPIView(CreateAPIView):
     serializer_class = PublicUserSerializer
     permission_classes = [AllowAny]
 
-    @extend_schema(
-        tags=["Users"],
-        summary="Регистрация нового пользователя",
-        description="Создает нового пользователя с указанным именем, почтой и паролем.",
-    )
     def post(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
 
