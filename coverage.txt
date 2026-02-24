@@ -1,0 +1,28 @@
+Name                          Stmts   Miss  Cover   Missing
+-----------------------------------------------------------
+habit_tracker/settings.py        60      0   100%
+habit_tracker/urls.py            14      1    93%   14
+run_tests.py                     13      0   100%
+tracker/admin.py                  3      0   100%
+tracker/apps.py                   3      0   100%
+tracker/habit_services.py        61      3    95%   87-89
+tracker/habit_validators.py      15      4    73%   23, 27, 31, 35
+tracker/models.py                53     10    81%   87-88, 91-93, 105, 112, 117, 119, 127
+tracker/serializers.py            7      0   100%
+tracker/tasks.py                 19      0   100%
+tracker/tests.py                213      2    99%   252-253
+tracker/urls.py                   7      0   100%
+tracker/views.py                 37      0   100%
+users/admin.py                    5      0   100%
+users/apps.py                     4      0   100%
+users/models.py                  37      4    89%   14, 26, 28, 52
+users/paginators.py               5      0   100%
+users/permissions.py             13      2    85%   21, 36
+users/serializer.py              17      0   100%
+users/services.py                47     36    23%   21-45, 53-57, 66-90
+users/tasks.py                   12      0   100%
+users/tests.py                  117      0   100%
+users/urls.py                    12      0   100%
+users/views.py                   53      4    92%   73, 101, 106, 119
+-----------------------------------------------------------
+TOTAL                           827     66    92%

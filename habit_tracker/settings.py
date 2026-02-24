@@ -5,13 +5,20 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+import habit_tracker
+
 # Загрузка переменных окружения
 load_dotenv(override=True)
 
 # Настройки проекта и пути
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY')
+# Ключ для шифрования
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+# Токен телеграмм бота
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 
 # Режим отладки
 DEBUG = True if os.getenv("DEBUG") == "True" else False
@@ -21,61 +28,60 @@ ALLOWED_HOSTS = ["*"]
 
 # Приложения Django
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
     "django_filters",
     "django_celery_beat",
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
     "corsheaders",
-    "rest_framework",
-    "users.apps.UsersConfig",
+    "django.contrib.admindocs",
+    "users",
+    "tracker",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
 ]
 
 # Точка входа в приложение для URL-адресов
-ROOT_URLCONF = 'habit_tracker.urls'
+ROOT_URLCONF = "habit_tracker.urls"
 
 # Шаблоны проекта
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.debug",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'habit_tracker.wsgi.application'
+WSGI_APPLICATION = "habit_tracker.wsgi.application"
 
 # База данных
 DATABASES = {
-    'default': {
-        'ENGINE': "django.db.backends.postgresql_psycopg2",
+    "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
         "NAME": os.getenv("NAME"),
         "USER": os.getenv("USER"),
         "PASSWORD": os.getenv("PASSWORD"),
@@ -89,16 +95,16 @@ DATABASES = {
 # Использование встроенных проверок безопасности
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -164,7 +170,7 @@ CACHE_ENABLED = True
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "redis://redis:6379/1",
+        "LOCATION": "redis://localhost:6379/1",
     }
 }
 
@@ -197,12 +203,12 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
-        "sending": {
+        "users": {
             "handlers": ["console", "file"],
             "level": "DEBUG",
             "propagate": False,
         },
-        "users": {
+        "tracker": {
             "handlers": ["console", "file"],
             "level": "DEBUG",
             "propagate": False,
@@ -216,7 +222,7 @@ LOGGING = {
 
 # Настройки Spectacular
 SPECTACULAR_SETTINGS = {
-    "TITLE": "uni_school API",
+    "TITLE": "habit-tracker API",
     "DESCRIPTION": "Test description",
     "VERSION": "v1",
     "TERMS_OF_SERVICE": "https://www.google.com/policies/terms/",
@@ -234,7 +240,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 # Разрешения для CSRF
 CSRF_TRUSTED_ORIGINS = [
-    "https://read-only.example.com",  #  адрес фронтенд-сервера
+    "https://read-only.example.com",  # адрес фронтенд-сервера
     "http://localhost:8000",  # адрес бэкенд-сервера
 ]
 # Разрешение для всех доменов
@@ -243,9 +249,9 @@ CORS_ALLOW_ALL_ORIGINS = False
 # Настройки Celery и Redis для асинхронных задач и очереди
 
 # URL-адрес брокера сообщений
-CELERY_BROKER_URL = "redis://redis:6379/0"
+CELERY_BROKER_URL = "redis://localhost:6379/0"
 # URL-адрес брокера результатов, также Redis
-CELERY_RESULT_BACKEND = "redis://redis:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 
 # Настройки сериализации для Celery
 CELERY_ACCEPT_CONTENT = ["json"]
@@ -268,8 +274,11 @@ if SCHEDULER_DEFAULT:
             "task": "users.tasks.deactivate_expired_users_task",
             "schedule": timedelta(minutes=1),
         },
+        "burning_habits_reminder_task": {
+            "task": "tracker.tasks.burning_habits_reminder_task",
+            "schedule": timedelta(minutes=1),
+        },
     }
 
 
 ############################################################################################
-
