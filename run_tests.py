@@ -1,9 +1,9 @@
 # run_tests.py
 import os
-import django
-from django.conf import settings
-from django.test.runner import DiscoverRunner
 import sys
+
+import django
+from django.test.runner import DiscoverRunner
 
 
 def run_tests():
@@ -15,7 +15,7 @@ def run_tests():
 
     # Запускаем тесты через Django Test Runner
     test_runner = DiscoverRunner(verbosity=2, failfast=False)
-    failures = test_runner.run_tests(['users', 'tracker'])
+    failures = test_runner.run_tests(["users", "tracker"])
 
     # Возвращаем код ошибки, если тесты провалились
     sys.exit(bool(failures))

@@ -5,8 +5,6 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-import habit_tracker
-
 # Загрузка переменных окружения
 load_dotenv(override=True)
 
@@ -25,6 +23,9 @@ DEBUG = True if os.getenv("DEBUG") == "True" else False
 
 # Домены, которые будут использоваться
 ALLOWED_HOSTS = ["*"]
+
+# Флаг: работаем ли в Docker?
+IN_DOCKER = os.getenv("IN_DOCKER", "False").lower() in ("true", "1", "on", "yes")
 
 # Приложения Django
 INSTALLED_APPS = [
@@ -81,14 +82,13 @@ WSGI_APPLICATION = "habit_tracker.wsgi.application"
 # База данных
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": os.getenv("NAME"),
-        "USER": os.getenv("USER"),
-        "PASSWORD": os.getenv("PASSWORD"),
-        # "HOST": "db" - для докера, а для локального запуска "HOST": os.getenv("HOST") из .ENV,
-        "HOST": os.getenv("HOST"),
-        "PORT": os.getenv("PORT"),
-    }
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("DB_NAME", "uni_school"),
+        "USER": os.getenv("DB_USER", "postgres"),
+        "PASSWORD": os.getenv("DB_PASSWORD", ""),
+        "HOST": os.getenv("DB_HOST", "localhost" if not IN_DOCKER else "db"),
+        "PORT": os.getenv("DB_PORT", "5432"),
+    },
 }
 
 # Password validation
@@ -167,12 +167,20 @@ DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 
 # Настройки кэша
 CACHE_ENABLED = True
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "redis://localhost:6379/1",
+if IN_DOCKER:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": "redis://redis:6379/1",
+        }
     }
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": "redis://localhost:6379/1",
+        }
+    }
 
 #
 APSCHEDULER_DATETIME_FORMAT = "d-m-Y H:i:s"
@@ -248,10 +256,16 @@ CORS_ALLOW_ALL_ORIGINS = False
 
 # Настройки Celery и Redis для асинхронных задач и очереди
 
-# URL-адрес брокера сообщений
-CELERY_BROKER_URL = "redis://localhost:6379/0"
-# URL-адрес брокера результатов, также Redis
-CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+if IN_DOCKER:
+    # URL-адрес брокера сообщений
+    CELERY_BROKER_URL = "redis://redis:6379/0"
+    # URL-адрес брокера результатов
+    CELERY_RESULT_BACKEND = "redis://redis:6379/0"
+else:
+    # URL-адрес брокера сообщений
+    CELERY_BROKER_URL = "redis://localhost:6379/0"
+    # URL-адрес брокера результатов, также Redis
+    CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 
 # Настройки сериализации для Celery
 CELERY_ACCEPT_CONTENT = ["json"]

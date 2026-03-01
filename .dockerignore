@@ -1,0 +1,12 @@
+**
+!config
+!habit_tracker
+!nginx
+!users
+!tracker
+!static
+!manage.py
+!poetry.lock
+!pyproject.toml
+!README.md
+!.env

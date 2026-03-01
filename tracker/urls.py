@@ -2,11 +2,13 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 
 from tracker.apps import TrackerConfig
-from tracker.views import (HabitCreateAPIView,
-                           HabitDeleteAPIView,
-                           HabitDetailAPIView,
-                           HabitListAPIView,
-                           HabitUpdateAPIView)
+from tracker.views import (
+    HabitCreateAPIView,
+    HabitDeleteAPIView,
+    HabitDetailAPIView,
+    HabitListAPIView,
+    HabitUpdateAPIView,
+)
 
 app_name = TrackerConfig.name
 router = DefaultRouter()
