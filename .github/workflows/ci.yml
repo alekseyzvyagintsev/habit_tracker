@@ -122,13 +122,13 @@ jobs:
 
       - name: Build Docker image
         run: |
-          export APP_IMAGE=habit_tracker
+          export APP_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/habit_tracker
           export IMAGE_TAG=${{ github.sha }}
           docker build -t $APP_IMAGE:$IMAGE_TAG .
 
       - name: Push Docker image
         run: |
-          export APP_IMAGE=habit_tracker
+          export APP_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/habit_tracker
           export IMAGE_TAG=${{ github.sha }}
           docker push $APP_IMAGE:$IMAGE_TAG
 
@@ -194,7 +194,7 @@ jobs:
             cd ${{ secrets.DEPLOY_DIR }}  # перейти в директорию деплоя
           
             # Переменные
-            export APP_IMAGE=habit_tracker # имя образа в Docker Hub
+            export APP_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/habit_tracker # имя образа в Docker Hub
             export IMAGE_TAG=${{ github.sha }}  # тег для деплоя
 
             # Остановить и удалить старые контейнеры
