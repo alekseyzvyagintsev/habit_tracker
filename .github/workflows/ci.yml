@@ -1,0 +1,208 @@
+name: Django CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      SECRET_KEY: django-insecure-ci-key-for-tests-only
+      DEBUG: True
+      DB_NAME: 'habit_tracker'
+      DB_USER: 'runner'
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_HOST: '127.0.0.1'
+      DB_PORT: '5432'
+      STRIPE_KEY: ${{ secrets.STRIPE_KEY }}
+      EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+      EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
+      EMAIL_USE_TLS: ${{ secrets.EMAIL_USE_TLS }}
+      EMAIL_USE_SSL: ${{ secrets.EMAIL_USE_SSL }}
+      EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
+      EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
+      DEFAULT_FROM_EMAIL: ${{ secrets.DEFAULT_FROM_EMAIL }}
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: habit_tracker
+          POSTGRES_USER: runner
+          POSTGRES_HOST_AUTH_METHOD: trust  # разрешает подключения без пароля
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          poetry config virtualenvs.in-project true
+
+      - name: Cache virtual environment
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: ${{ runner.os }}-poetry-${{ hashFiles('pyproject.toml', 'poetry.lock') }}
+          restore-keys: ${{ runner.os }}-poetry-
+
+      - name: Install dependencies
+        run: |
+          poetry install --no-interaction --no-ansi
+
+      - name: Run migrate
+        run: |
+          poetry run python manage.py migrate
+
+      - name: Start Celery Worker
+        run: |
+          export CELERY_BROKER_URL=redis://localhost:6379/0
+          poetry run celery -A habit_tracker worker -l info &
+
+      - name: Run tests
+        run: |
+          poetry run python manage.py test
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8
+
+    - name: Run Flake8
+      run: flake8 .
+
+  build:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        run: |
+          echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: Build Docker image
+        run: |
+          export APP_IMAGE=habit_tracker
+          export IMAGE_TAG=${{ github.sha }}
+          docker build -t $APP_IMAGE:$IMAGE_TAG .
+
+      - name: Push Docker image
+        run: |
+          export APP_IMAGE=habit_tracker
+          export IMAGE_TAG=${{ github.sha }}
+          docker push $APP_IMAGE:$IMAGE_TAG
+
+  deploy:
+    # if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Add server to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -t rsa ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Copy docker-compose.yml to server
+        run: |
+          scp docker-compose.yml ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/docker-compose.yml
+
+      - name: Copy nginx config to server
+        run: |
+          scp -r ./nginx ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/nginx
+
+      - name: Create .env file on server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            cd ${{ secrets.DEPLOY_DIR }}
+            cat > .env << 'INNER_EOF'
+          SECRET_KEY=${{ secrets.SECRET_KEY }}
+          BOT_TOKEN=${{ secrets.BOT_TOKEN }}
+          CHAT_ID=${{ secrets.CHAT_ID }}
+          DEBUG=False
+          IN_DOCKER=False
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          EMAIL_HOST=${{ secrets.EMAIL_HOST }}
+          EMAIL_PORT=${{ secrets.EMAIL_PORT }}
+          EMAIL_USE_TLS=${{ secrets.EMAIL_USE_TLS }}
+          EMAIL_USE_SSL=${{ secrets.EMAIL_USE_SSL }}
+          EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }}
+          EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}
+          DEFAULT_FROM_EMAIL=${{ secrets.DEFAULT_FROM_EMAIL }}
+          INNER_EOF
+          EOF
+          
+      - name: Deploy Docker image
+        run: |
+          # Скрипт для деплоя на сервер и перезапуска контейнера
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << EOF
+            set -e  # остановить выполнение при ошибке
+            cd ${{ secrets.DEPLOY_DIR }}  # перейти в директорию деплоя
+          
+            # Переменные
+            export APP_IMAGE=habit_tracker # имя образа в Docker Hub
+            export IMAGE_TAG=${{ github.sha }}  # тег для деплоя
+
+            # Остановить и удалить старые контейнеры
+            docker compose down || true
+
+            # Удалить старый образ (если был)
+            # docker rm $APP_IMAGE:$OLD_TAG || true
+          
+            # Запустить новый контейнер
+            docker compose up -d
+          
+            echo "Деплой завершен: $APP_IMAGE:$IMAGE_TAG"
+          EOF
