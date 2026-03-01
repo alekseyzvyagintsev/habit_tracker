@@ -201,6 +201,9 @@ jobs:
             # Переменные
             export APP_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/habit_tracker # имя образа в Docker Hub
             export IMAGE_TAG=${{ github.sha }}  # тег для деплоя
+          
+            # Загружаем свежий образ
+            docker compose pull
 
             # Остановить и удалить старые контейнеры
             docker compose down || true
@@ -209,7 +212,7 @@ jobs:
             # docker rm $APP_IMAGE:$OLD_TAG || true
           
             # Запустить новый контейнер
-            docker compose up -d
+            docker compose up -d --force-recreate
           
             echo "Деплой завершен: $APP_IMAGE:$IMAGE_TAG"
           EOF
