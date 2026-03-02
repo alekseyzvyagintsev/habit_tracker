@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_DB: ${DB_NAME}
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - ./postgres_data:/var/lib/postgresql/data/
     ports:
       - "5432:5432"
     healthcheck:
@@ -19,7 +19,7 @@ services:
   redis:
     image: redis:7.2.4-alpine
     volumes:
-      - redis_data:/data
+      - ./redis_data:/data
     ports:
       - "6379:6379"
     command: ["redis-server", "--appendonly", "yes"]
@@ -40,8 +40,8 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - static_volume:/app/collected_static
-      - media_volume:/app/media
+      - ./collected_static:/app/collected_static
+      - ./media:/app/media
     ports:
       - "8000:8000"
     command: sh -c "
@@ -105,14 +105,14 @@ services:
       - "8080:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - static_volume:/app/collected_static
-      - media_volume:/app/media
+      - ./collected_static:/app/collected_static
+      - ./media:/app/media
     depends_on:
       - web
     restart: unless-stopped
-
-volumes:
-  postgres_data:
-  static_volume:
-  media_volume:
-  redis_data:
+#
+#volumes:
+#  postgres_data:
+#  redis_data:
+#  static_volume:
+#  media_volume:
