@@ -159,8 +159,8 @@ jobs:
             # Создание директории деплоя
             mkdir -p ${{ secrets.DEPLOY_DIR }}
             # Копирование файлов конфигурации
-            scp docker-compose.yml ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/
-            scp -r ./nginx ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/
+            scp docker-compose.yml ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/docker-compose.yml
+            scp -r ./nginx ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/nginx
             cd ${{ secrets.DEPLOY_DIR }}
             # Создаем файл .env
             cat > .env << 'INNER_EOF'
