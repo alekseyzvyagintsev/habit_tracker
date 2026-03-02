@@ -54,6 +54,7 @@ services:
         python manage.py cau &&
         gunicorn habit_tracker.wsgi:application --bind 0.0.0.0:8000
       "
+    restart: unless-stopped
 
   celery:
     image: ${APP_IMAGE:-habit_tracker}:${IMAGE_TAG:-latest}
@@ -102,7 +103,7 @@ services:
   nginx:
     image: nginx:alpine
     ports:
-      - "8080:80"
+      - "80:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./collected_static:/app/collected_static
@@ -114,5 +115,3 @@ services:
 volumes:
   postgres_data:
   redis_data:
-#  static_volume:
-#  media_volume:

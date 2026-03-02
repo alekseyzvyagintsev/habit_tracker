@@ -294,5 +294,11 @@ if SCHEDULER_DEFAULT:
         },
     }
 
+# В конце файла
+if not DEBUG:
+    print("STATIC_ROOT:", STATIC_ROOT)
+    print("STATICFILES_DIRS:", STATICFILES_DIRS)
+    print("STATIC_URL:", STATIC_URL)
+
 
 ############################################################################################
