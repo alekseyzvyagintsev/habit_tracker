@@ -10,6 +10,7 @@ RUN apt-get update && \
     apt-get install -y \
         gcc \
         libpq-dev \
+        postgresql-client \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
