@@ -171,16 +171,16 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
             cd ${{ secrets.DEPLOY_DIR }}
             # Создаем файл .env
-            cat > .env << 'INNER_EOF'
+            cat > .env << INNER_EOF
           SECRET_KEY=${{ secrets.SECRET_KEY }}
           BOT_TOKEN=${{ secrets.BOT_TOKEN }}
           CHAT_ID=${{ secrets.CHAT_ID }}
           DEBUG=False
-          IN_DOCKER=False
+          IN_DOCKER=True
           DB_NAME=${{ secrets.DB_NAME }}
           DB_USER=${{ secrets.DB_USER }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          DB_HOST=${{ secrets.DB_HOST }}
+          DB_HOST=db
           DB_PORT=${{ secrets.DB_PORT }}
           EMAIL_HOST=${{ secrets.EMAIL_HOST }}
           EMAIL_PORT=${{ secrets.EMAIL_PORT }}
@@ -202,15 +202,15 @@ jobs:
             # Переменные
             export APP_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/habit_tracker # имя образа в Docker Hub
             export IMAGE_TAG=latest  # тег для деплоя
-          
-            # Загружаем свежий образ
-            docker compose pull
 
             # Остановить и удалить старые контейнеры
             docker compose down || true
 
             # Удалить старый образ (если был)
-            # docker rm $APP_IMAGE:$OLD_TAG || true
+            docker image prune -a || true
+          
+            # Загружаем свежий образ
+            docker compose pull
           
             # Запустить новый контейнер
             docker compose up -d --force-recreate
