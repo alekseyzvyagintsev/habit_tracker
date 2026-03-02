@@ -157,12 +157,11 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
             set -e
-            DEPLOY_DIR="${{ secrets.DEPLOY_DIR }}"
-            mkdir -p "$DEPLOY_DIR"
-            mkdir -p "$DEPLOY_DIR/nginx"
-            mkdir -p "$DEPLOY_DIR/collected_static"
-            mkdir -p "$DEPLOY_DIR/media"
-            echo "Директории созданы: $DEPLOY_DIR/{nginx,collected_static,media}"
+            mkdir -p "${{ secrets.DEPLOY_DIR }}"
+            cd "${{ secrets.DEPLOY_DIR }}"
+            mkdir -p "nginx"
+            mkdir -p "collected_static"
+            mkdir -p "media"
           EOF
 
       - name: Copy docker-compose.yml to server
