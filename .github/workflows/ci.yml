@@ -207,7 +207,7 @@ jobs:
             docker compose down || true
 
             # Удалить старый образ (если был)
-            docker image prune -a || true
+            docker image prune -a --force || true
           
             # Загружаем свежий образ
             docker compose pull

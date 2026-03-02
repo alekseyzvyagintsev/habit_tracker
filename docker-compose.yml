@@ -117,6 +117,7 @@ services:
     ports:
       - "8080:80"
     volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - static_volume:/app/collected_static
       - media_volume:/app/media
     depends_on:
