@@ -171,7 +171,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
             cd ${{ secrets.DEPLOY_DIR }}
             # Создаем файл .env
-            cat > .env << INNER_EOF
+            cat > .env << 'INNER_EOF'
           SECRET_KEY=${{ secrets.SECRET_KEY }}
           BOT_TOKEN=${{ secrets.BOT_TOKEN }}
           CHAT_ID=${{ secrets.CHAT_ID }}
@@ -189,6 +189,8 @@ jobs:
           EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }}
           EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}
           DEFAULT_FROM_EMAIL=${{ secrets.DEFAULT_FROM_EMAIL }}
+          APP_IMAGE=alex0236889/habit_tracker
+          IMAGE_TAG=latest
           INNER_EOF
           EOF
           

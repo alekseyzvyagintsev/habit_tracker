@@ -46,8 +46,8 @@ services:
       - "8000:8000"
     command: sh -c "
         echo 'Ожидание БД...' &&
-        until pg_isready -h db -U ${DB_USER} -d ${DB_NAME}; do
-          sleep 2
+        until pg_isready -h db -U $${DB_USER} -d $${DB_NAME}; do
+          sleep 2;
         done &&
         python manage.py collectstatic --noinput &&
         python manage.py migrate &&
@@ -69,7 +69,7 @@ services:
       sh -c "
         echo 'Ожидание миграций...' &&
         until python manage.py migrate --list > /dev/null 2>&1; do
-          sleep 5
+          sleep 5;
         done &&
         celery -A habit_tracker worker -l info
       "
@@ -93,7 +93,7 @@ services:
       bash -c "
         echo 'Ожидание миграций для beat...' &&
         until python manage.py migrate --list > /dev/null 2>&1; do
-          sleep 5
+          sleep 5;
         done &&
         celery -A habit_tracker beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
       "
