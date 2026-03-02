@@ -170,7 +170,7 @@ jobs:
 
       - name: Copy nginx config to server
         run: |
-          scp -r ./nginx ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/nginx
+          scp ./nginx/nginx.conf ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/nginx
 
       - name: Create .env and deploy on server
         run: |
