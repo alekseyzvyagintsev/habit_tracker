@@ -153,20 +153,16 @@ jobs:
           ssh-keyscan -t rsa ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      - name: Make deploy directory on server
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} \
-            "mkdir -p ${{ secrets.DEPLOY_DIR }}"
-
-      - name: Copy docker-compose.yml and nginx config to server
-        run: |
-          scp docker-compose.yml ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/
-          scp -r ./nginx ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/
-
-      - name: Create .env file on server
+      - name: Make deploy directory and copy config files on server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            # Создание директории деплоя
+            mkdir -p ${{ secrets.DEPLOY_DIR }}
+            # Копирование файлов конфигурации
+            scp docker-compose.yml ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/
+            scp -r ./nginx ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/
             cd ${{ secrets.DEPLOY_DIR }}
+            # Создаем файл .env
             cat > .env << 'INNER_EOF'
           SECRET_KEY=${{ secrets.SECRET_KEY }}
           BOT_TOKEN=${{ secrets.BOT_TOKEN }}
