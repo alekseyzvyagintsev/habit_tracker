@@ -12,21 +12,17 @@ services:
       - "5432:5432"
     healthcheck:
       test: bash -c 'pg_isready -U ${DB_USER} -d ${DB_NAME}'
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7.2.4-alpine
-    env_file:
-      - .env
-    environment:
-      IN_DOCKER: "True"  # для settings.py
-    command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
     ports:
       - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 1s
@@ -38,9 +34,6 @@ services:
     env_file: .env
     environment:
       IN_DOCKER: "True"  # для settings.py
-      DB_HOST: db
-      DB_PORT: 5432
-      REDIS_HOST: redis://redis:6379/0
     depends_on:
       db:
         condition: service_healthy
@@ -66,8 +59,6 @@ services:
     image: ${APP_IMAGE:-habit_tracker}:${IMAGE_TAG:-latest}
     env_file: .env
     environment:
-      DB_HOST: db  # для правильного старта celery
-      REDIS_HOST: redis://redis:6379/0  # для правильного старта celery
       IN_DOCKER: "True"  # для settings.py
     depends_on:
       db:
@@ -90,11 +81,8 @@ services:
 
   beat:
     image: ${APP_IMAGE:-habit_tracker}:${IMAGE_TAG:-latest}
-    env_file:
-      - .env
+    env_file: .env
     environment:
-      DB_HOST: db
-      REDIS_HOST: redis://redis:6379/0
       IN_DOCKER: "True"
     depends_on:
       db:
@@ -107,7 +95,6 @@ services:
         until python manage.py migrate --list > /dev/null 2>&1; do
           sleep 5
         done &&
-        echo 'Migrations are ready. Starting celery beat...' &&
         celery -A habit_tracker beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
       "
 
