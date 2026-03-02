@@ -110,9 +110,9 @@ services:
     depends_on:
       - web
     restart: unless-stopped
-#
-#volumes:
-#  postgres_data:
-#  redis_data:
-#  static_volume:
-#  media_volume:
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_volume:
+  media_volume:
