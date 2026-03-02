@@ -153,14 +153,22 @@ jobs:
           ssh-keyscan -t rsa ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      - name: Make deploy directory and copy config files on server
+      - name: Make deploy directory on server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} \
+            "mkdir -p ${{ secrets.DEPLOY_DIR }}"
+
+      - name: Copy docker-compose.yml to server
+        run: |
+          scp docker-compose.yml ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/docker-compose.yml
+
+      - name: Copy nginx config to server
+        run: |
+          scp -r ./nginx ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/nginx
+
+      - name: Create .env and deploy on server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            # Создание директории деплоя
-            mkdir -p ${{ secrets.DEPLOY_DIR }}
-            # Копирование файлов конфигурации
-            scp docker-compose.yml ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/docker-compose.yml
-            scp -r ./nginx ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/nginx
             cd ${{ secrets.DEPLOY_DIR }}
             # Создаем файл .env
             cat > .env << 'INNER_EOF'
