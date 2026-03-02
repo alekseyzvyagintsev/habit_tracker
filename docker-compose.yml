@@ -2,7 +2,7 @@ services:
   db:
     image: postgres:16.0-alpine
     environment:
-      IN_DOCKER: "True"
+      IN_DOCKER: "True"  # для settings.py
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_DB: ${DB_NAME}
@@ -16,55 +16,14 @@ services:
       timeout: 5s
       retries: 5
 
-  web:
-    image: ${APP_IMAGE:-habit_tracker}:${IMAGE_TAG:-latest}
-#    build: .
-    env_file:
-      - .env
-    environment:
-      IN_DOCKER: "True"
-      DB_HOST: db
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_PORT: "5432"
-      REDIS_HOST: redis://redis:6379
-    command: sh -c "
-      python manage.py collectstatic --noinput &&
-      python manage.py migrate &&
-      python manage.py cau &&
-      gunicorn habit_tracker.wsgi:application --bind 0.0.0.0:8000
-      "
-    volumes:
-      - static_volume:/code/collected_static
-      - media_volume:/code/media
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    ports:
-      - "8000:8000"
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "8080:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - static_volume:/app/collected_static
-    depends_on:
-      - web
-
   redis:
     image: redis:7.2.4-alpine
     env_file:
       - .env
     environment:
-      IN_DOCKER: "True"
-    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+      IN_DOCKER: "True"  # для settings.py
+    command: ["redis-server", "--appendonly", "yes"]
     volumes:
-      - "./config/redis.conf:/usr/local/etc/redis/redis.conf"
       - redis_data:/data
     ports:
       - "6379:6379"
@@ -74,18 +33,55 @@ services:
       timeout: 1s
       retries: 5
 
-  celery:
+  web:
     image: ${APP_IMAGE:-habit_tracker}:${IMAGE_TAG:-latest}
-    env_file:
-      - .env
+    env_file: .env
     environment:
-      IN_DOCKER: "True"
-    command: bash -c "celery -A habit_tracker worker -l info"
+      IN_DOCKER: "True"  # для settings.py
+      DB_HOST: db
+      DB_PORT: 5432
+      REDIS_HOST: redis://redis:6379/0
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      - static_volume:/code/collected_static
+      - media_volume:/code/media
+    ports:
+      - "8000:8000"
+    command: sh -c "
+        echo 'Ожидание БД...' &&
+        until pg_isready -h db -U ${DB_USER} -d ${DB_NAME}; do
+          sleep 2
+        done &&
+        python manage.py collectstatic --noinput &&
+        python manage.py migrate &&
+        python manage.py cau &&
+        gunicorn habit_tracker.wsgi:application --bind 0.0.0.0:8000
+      "
+
+  celery:
+    image: ${APP_IMAGE:-habit_tracker}:${IMAGE_TAG:-latest}
+    env_file: .env
+    environment:
+      DB_HOST: db  # для правильного старта celery
+      REDIS_HOST: redis://redis:6379/0  # для правильного старта celery
+      IN_DOCKER: "True"  # для settings.py
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Ожидание миграций...' &&
+        until python manage.py migrate --list > /dev/null 2>&1; do
+          sleep 5
+        done &&
+        celery -A habit_tracker worker -l info
+      "
     healthcheck:
       test: ["CMD", "pgrep", "celery"]
       interval: 10s
@@ -97,22 +93,36 @@ services:
     env_file:
       - .env
     environment:
+      DB_HOST: db
+      REDIS_HOST: redis://redis:6379/0
       IN_DOCKER: "True"
-    command: >
-      bash -c "
-        echo 'Waiting for DB migrations to be applied...' &&
-        until python /code/manage.py migrate --list > /dev/null 2>&1; do
-          sleep 5
-        done &&
-        echo 'Migrations are ready. Starting celery beat...' &&
-        celery -A habit_tracker beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-      "
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    command: >
+      bash -c "
+        echo 'Ожидание миграций для beat...' &&
+        until python manage.py migrate --list > /dev/null 2>&1; do
+          sleep 5
+        done &&
+        echo 'Migrations are ready. Starting celery beat...' &&
+        celery -A habit_tracker beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+      "
 
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - static_volume:/app/collected_static
+      - media_volume:/app/media
+    depends_on:
+      - web
+    restart: unless-stopped
 
 volumes:
   postgres_data:
