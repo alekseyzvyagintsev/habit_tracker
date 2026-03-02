@@ -161,10 +161,10 @@ jobs:
       - name: Copy docker-compose.yml to server
         run: |
           scp docker-compose.yml ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/docker-compose.yml
-
-      - name: Copy nginx config to server
-        run: |
-          scp -r ./nginx ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/nginx
+#
+#      - name: Copy nginx config to server
+#        run: |
+#          scp -r ./nginx ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}/nginx
 
       - name: Create .env and deploy on server
         run: |

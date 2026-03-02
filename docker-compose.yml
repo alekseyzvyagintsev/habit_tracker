@@ -47,8 +47,8 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - static_volume:/code/collected_static
-      - media_volume:/code/media
+      - static_volume:/app/collected_static
+      - media_volume:/app/media
     ports:
       - "8000:8000"
     command: sh -c "
