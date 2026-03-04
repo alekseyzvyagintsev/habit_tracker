@@ -1,0 +1,117 @@
+services:
+  db:
+    image: postgres:16.0-alpine
+    environment:
+      IN_DOCKER: "True"  # для settings.py
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: bash -c 'pg_isready -U ${DB_USER} -d ${DB_NAME}'
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.2.4-alpine
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 1s
+      retries: 5
+
+  web:
+    image: ${APP_IMAGE:-habit_tracker}:${IMAGE_TAG:-latest}
+    env_file: .env
+    environment:
+      IN_DOCKER: "True"  # для settings.py
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./collected_static:/app/collected_static
+      - ./media:/app/media
+    ports:
+      - "8000:8000"
+    command: sh -c "
+        echo 'Ожидание БД...' &&
+        until pg_isready -h db -U $${DB_USER} -d $${DB_NAME}; do
+          sleep 2;
+        done &&
+        python manage.py collectstatic --noinput &&
+        python manage.py migrate &&
+        python manage.py cau &&
+        gunicorn habit_tracker.wsgi:application --bind 0.0.0.0:8000
+      "
+    restart: unless-stopped
+
+  celery:
+    image: ${APP_IMAGE:-habit_tracker}:${IMAGE_TAG:-latest}
+    env_file: .env
+    environment:
+      IN_DOCKER: "True"  # для settings.py
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Ожидание миграций...' &&
+        until python manage.py migrate --list > /dev/null 2>&1; do
+          sleep 5;
+        done &&
+        celery -A habit_tracker worker -l info
+      "
+    healthcheck:
+      test: ["CMD", "pgrep", "celery"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  beat:
+    image: ${APP_IMAGE:-habit_tracker}:${IMAGE_TAG:-latest}
+    env_file: .env
+    environment:
+      IN_DOCKER: "True"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      bash -c "
+        echo 'Ожидание миграций для beat...' &&
+        until python manage.py migrate --list > /dev/null 2>&1; do
+          sleep 5;
+        done &&
+        celery -A habit_tracker beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+      "
+
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./collected_static:/app/collected_static
+      - ./media:/app/media
+    depends_on:
+      - web
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
