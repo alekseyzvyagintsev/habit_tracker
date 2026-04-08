@@ -48,9 +48,6 @@ bash git clone https://github.com/alekseyzvyagintsev/habit_tracker.git cd habit_
 - CHAT_ID=your_chat_id
 - STRIPE_KEY=your_stripe_key
 
-
-> Все чувствительные данные (особенно пароли и ключи) должны быть защищены. В продакшене используйте `DEBUG=False`.
-
 ### 3. Запуск приложения через Docker
 
 bash docker-compose up --build
@@ -61,8 +58,7 @@ bash docker-compose up --build
 - Админка: `http://localhost/admin/`
 - Статика и медиа автоматически обслуживаются через Nginx
 - Celery и Celery Beat работают в фоне
-
-> Первый запуск может занять больше времени из-за сборки образов и миграций.
+- Взаимодествие с API через Swagger: `http://localhost:8000/api/swagger/` описано в [API.md](API.md) (так же см. [screenshots](screenshots))
 
 ---
 
@@ -73,7 +69,7 @@ bash docker-compose up --build
 ### Архитектура CI/CD
 
 1. **Build** — сборка Docker-образа и публикация в Docker Hub.
-2. **Deploy** — автоматический деплой на удалённый сервер при пуше или pull request (в `main`/`master` опционально).
+2. **Deploy** — автоматический деплой на удалённый сервер при пуше или pull request (в `main` или `master` опционально).
 
 ### Настройка секретов в GitHub
 
