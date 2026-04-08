@@ -25,6 +25,7 @@ API поддерживает аутентификацию через JWT-ток�
 ### Доступные эндпоинты для аутентификации:
 
 - `POST /login/` — получение пары токенов (access и refresh)
+![01 Получение JWT токена для авторизации.png](screenshots/01%20%D0%9F%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5%20JWT%20%D1%82%D0%BE%D0%BA%D0%B5%D0%BD%D0%B0%20%D0%B4%D0%BB%D1%8F%20%D0%B0%D0%B2%D1%82%D0%BE%D1%80%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8.png)
 - `POST /token/refresh/` — обновление access-токена
 - `POST /token/verify/` — проверка валидности access-токена
 
@@ -33,6 +34,7 @@ API поддерживает аутентификацию через JWT-ток�
 ```
 Authorization: Bearer <access_token>
 ```
+![02 Использование JWT токена для авторизации.png](screenshots/02%20%D0%98%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5%20JWT%20%D1%82%D0%BE%D0%BA%D0%B5%D0%BD%D0%B0%20%D0%B4%D0%BB%D1%8F%20%D0%B0%D0%B2%D1%82%D0%BE%D1%80%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8.png)
 
 ---
 
@@ -66,6 +68,7 @@ Authorization: Bearer <access_token>
 ---
 
 ### 2. Получение списка пользователей
+![08 Получение списка пользователей.png](screenshots/08%20%D0%9F%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5%20%D1%81%D0%BF%D0%B8%D1%81%D0%BA%D0%B0%20%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D0%B5%D0%BB%D0%B5%D0%B9.png)
 
 - **Метод:** `GET`
 - **URL:** `/users/`
@@ -82,26 +85,15 @@ Authorization: Bearer <access_token>
   "results": [
     {
       "id": 1,
-      "email": "admin@example.com",
-      "phone_number": null,
-      "avatar": null,
-      "country": null,
-      "is_active": true
+      "email": "admin@example.com"
     },
-        {
+    {
       "id": 2,
-      "email": "moder@example.com",
-      "phone_number": null,
-      "avatar": null,
-      "country": null,
-      "is_active": true
-    },    {
+      "email": "moderator@example.com"
+    },
+    {
       "id": 3,
-      "email": "user@example.com",
-      "phone_number": null,
-      "avatar": null,
-      "country": null,
-      "is_active": true
+      "email": "user@example.com"
     }
   ]
 }
@@ -117,24 +109,36 @@ Authorization: Bearer <access_token>
 - **Права доступа:** `IsAuthenticated`, `IsUserOwner` или `IsAdminUser`
 
 #### Ответ (для владельца):
+![09 Получение профиля пользователя.png](screenshots/09%20%D0%9F%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5%20%D0%BF%D1%80%D0%BE%D1%84%D0%B8%D0%BB%D1%8F%20%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D0%B5%D0%BB%D1%8F.png)
 
 ```json
 {
-  "id": 3,
-  "email": "user@example.com",
-  "phone_number": "+79991234567",
-  "avatar": "/media/avatars/user.jpg",
-  "country": "Россия",
-  "is_active": true
+  "id": 1,
+  "last_login": "2026-04-08T13:43:19.887348+03:00",
+  "is_superuser": true,
+  "first_name": "",
+  "last_name": "",
+  "is_staff": true,
+  "date_joined": "2026-01-29T21:43:03.818248+03:00",
+  "email": "admin@example.com",
+  "phone_number": null,
+  "avatar": null,
+  "country": null,
+  "is_active": true,
+  "groups": [
+    1
+  ],
+  "user_permissions": []
 }
 ```
 
 #### Ответ (для стороннего пользователя):
+![10 Получение профиля стороннего пользователя.png](screenshots/10%20%D0%9F%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5%20%D0%BF%D1%80%D0%BE%D1%84%D0%B8%D0%BB%D1%8F%20%D1%81%D1%82%D0%BE%D1%80%D0%BE%D0%BD%D0%BD%D0%B5%D0%B3%D0%BE%20%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D0%B5%D0%BB%D1%8F.png)
 
 ```json
 {
-  "id": 3,
-  "email": "user@example.com"
+  "id": 2,
+  "email": "moderator@example.com"
 }
 ```
 
@@ -178,6 +182,7 @@ Authorization: Bearer <access_token>
 ## Привычки (`/habit/`)
 
 ### 1. Создание привычки
+![03 Создание привычки.png](screenshots/03%20%D0%A1%D0%BE%D0%B7%D0%B4%D0%B0%D0%BD%D0%B8%D0%B5%20%D0%BF%D1%80%D0%B8%D0%B2%D1%8B%D1%87%D0%BA%D0%B8.png)
 
 - **Метод:** `POST`
 - **URL:** `/habit/create/`
@@ -204,11 +209,11 @@ Authorization: Bearer <access_token>
 | Поле               | Тип      | Обязательн. | Описание                                                               |
 |--------------------|----------|-------------|------------------------------------------------------------------------|
 | `action`           | string   | Да          | Описание действия                                                      |
-| `date_start`       | datetime | Да          | Дата и время начала выполнения (ISO 8601)                              |
+| `date_start`       | datetime | Да          | Дата и время начала выполнения                                         |
 | `date_end`         | duration | Нет         | Продолжительность действия (дельта от `date_start` по умолчанию 30 дн. |
 | `location`         | string   | Да          | Место выполнения                                                       |
-| `periodicity_days` | duration | Да          | Периодичность (ISO 8601 duration, от 1 до 7 дней)                      |
-| `time_to_complete` | duration | Да          | Время на выполнение (ISO 8601 duration, до 120 секунд)                 |
+| `periodicity_days` | duration | Да          | Периодичность (от 1 до 7 дней)                                         |
+| `time_to_complete` | duration | Да          | Время на выполнение (до 120 секунд)                                    |
 | `is_pleasant`      | boolean  | Нет         | Приятная ли привычка                                                   |
 | `is_public`        | boolean  | Нет         | Публичная ли привычка                                                  |
 | `reward`           | string   | Условно     | Вознаграждение (не может быть с `related_habit`)                       |
@@ -241,6 +246,7 @@ Authorization: Bearer <access_token>
 ---
 
 ### 2. Получение привычки по ID
+![04 Получение привычки по id.png](screenshots/04%20%D0%9F%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5%20%D0%BF%D1%80%D0%B8%D0%B2%D1%8B%D1%87%D0%BA%D0%B8%20%D0%BF%D0%BE%20id.png)
 
 - **Метод:** `GET`
 - **URL:** `/habit/<int:pk>/`
@@ -254,6 +260,7 @@ Authorization: Bearer <access_token>
 ---
 
 ### 3. Обновление привычки
+![05 Изменение привычи метод PATCH.png](screenshots/05%20%D0%98%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D0%B5%20%D0%BF%D1%80%D0%B8%D0%B2%D1%8B%D1%87%D0%B8%20%D0%BC%D0%B5%D1%82%D0%BE%D0%B4%20PATCH.png)
 
 - **Метод:** `PUT` / `PATCH`
 - **URL:** `/habit/<int:pk>/update/`
@@ -267,6 +274,7 @@ Authorization: Bearer <access_token>
 ---
 
 ### 4. Удаление привычки
+![06 Удаление привычки.png](screenshots/06%20%D0%A3%D0%B4%D0%B0%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5%20%D0%BF%D1%80%D0%B8%D0%B2%D1%8B%D1%87%D0%BA%D0%B8.png)
 
 - **Метод:** `DELETE`
 - **URL:** `/habit/<int:pk>/delete/`
@@ -280,6 +288,7 @@ Authorization: Bearer <access_token>
 ---
 
 ### 5. Получение списка привычек
+![07 Получение списка привычек.png](screenshots/07%20%D0%9F%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5%20%D1%81%D0%BF%D0%B8%D1%81%D0%BA%D0%B0%20%D0%BF%D1%80%D0%B8%D0%B2%D1%8B%D1%87%D0%B5%D0%BA.png)
 
 - **Метод:** `GET`
 - **URL:** `/habit/list/`
