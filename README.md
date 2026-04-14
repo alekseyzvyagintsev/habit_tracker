@@ -13,7 +13,9 @@
 
 ### 1. Клонирование репозитория
 
-bash git clone https://github.com/alekseyzvyagintsev/habit_tracker.git cd habit_tracker
+```bash
+git clone https://github.com/alekseyzvyagintsev/habit_tracker.git && cd habit_tracker
+```
 
 
 ### 2. Создание `.env` файла
@@ -50,7 +52,9 @@ bash git clone https://github.com/alekseyzvyagintsev/habit_tracker.git cd habit_
 
 ### 3. Запуск приложения через Docker
 
-bash docker-compose up --build
+```bash
+docker-compose up --build
+```
 
 
 После запуска:
